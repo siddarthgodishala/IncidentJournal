@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/notebook_routes" app:startDestination="@id/notebookFragment">
+    <fragment android:id="@+id/notebookFragment"
+        android:name="com.siddarth.criminalintent.screens.NotebookFragment"
+        android:label="@string/notebook">
+        <action android:id="@+id/open_entry" app:destination="@id/entryFragment" />
+    </fragment>
+    <fragment android:id="@+id/entryFragment"
+        android:name="com.siddarth.criminalintent.screens.EntryFragment"
+        android:label="@string/edit_title">
+        <argument android:name="entry_key" app:argType="string"
+            app:nullable="true" android:defaultValue="@null" />
+    </fragment>
+</navigation>

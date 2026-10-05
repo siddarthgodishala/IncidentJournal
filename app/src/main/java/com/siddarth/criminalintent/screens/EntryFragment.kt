@@ -9,6 +9,7 @@ import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.navigation.fragment.findNavController
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -44,6 +45,7 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
         binding.editorToolbar.setNavigationContentDescription(R.string.back)
         binding.editorToolbar.setNavigationOnClickListener { leave() }
         binding.editorToolbar.inflateMenu(R.menu.entry_actions)
+        tintNotebookToolbar(binding.editorToolbar)
         binding.editorToolbar.menu.findItem(R.id.action_delete).isVisible = model.existing
         binding.editorToolbar.setOnMenuItemClickListener { item ->
             when(item.itemId) {
@@ -89,7 +91,7 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
                 launch { model.busy.collect { render() } }
                 launch { model.photoPending.collect { render() } }
                 launch { model.problem.collect { if (it) message(R.string.load_error) } }
-                launch { model.closed.collect { if (it) parentFragmentManager.popBackStack() } }
+                launch { model.closed.collect { if (it) findNavController().popBackStack() } }
             }
         }
         render()
@@ -125,7 +127,9 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
 
     private fun pick(clock: Boolean) {
         if (!model.ready.value || childFragmentManager.findFragmentByTag("picker") != null) return
-        EntryClockDialog().apply { arguments = Bundle().apply { putLong("timestamp", model.draft.occurredAt); putBoolean("clock", clock) } }.show(childFragmentManager, "picker")
+        val dialog = if (clock) EntryTimeDialog() else EntryDateDialog()
+        dialog.arguments = Bundle().apply { putLong("timestamp", model.draft.occurredAt) }
+        dialog.show(childFragmentManager, "picker")
     }
     private fun confirm(deletion: Boolean) {
         if (model.busy.value || model.photoPending.value || childFragmentManager.findFragmentByTag("confirmation") != null) return

@@ -9,13 +9,35 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.siddarth.criminalintent.R
 import java.util.Calendar
 
-class EntryClockDialog : DialogFragment() {
+class EntryDateDialog : DialogFragment() {
     override fun onCreateDialog(state: Bundle?): Dialog {
-        val date = Calendar.getInstance().apply { timeInMillis = requireArguments().getLong("timestamp") }
-        fun deliver() { parentFragmentManager.setFragmentResult("timestamp", Bundle().apply { putLong("value", date.timeInMillis) }) }
-        return if (requireArguments().getBoolean("clock")) {
-            TimePickerDialog(requireContext(), { _, hour, minute -> date.set(Calendar.HOUR_OF_DAY, hour); date.set(Calendar.MINUTE, minute); date.set(Calendar.SECOND, 0); deliver() }, date.get(Calendar.HOUR_OF_DAY), date.get(Calendar.MINUTE), android.text.format.DateFormat.is24HourFormat(requireContext()))
-        } else DatePickerDialog(requireContext(), { _, year, month, day -> date.set(year, month, day); deliver() }, date.get(Calendar.YEAR), date.get(Calendar.MONTH), date.get(Calendar.DAY_OF_MONTH))
+        val date = Calendar.getInstance().apply {
+            timeInMillis = requireArguments().getLong("timestamp")
+        }
+        return DatePickerDialog(requireContext(), { _, year, month, day ->
+            date.set(year, month, day)
+            parentFragmentManager.setFragmentResult("timestamp", Bundle().apply {
+                putLong("value", date.timeInMillis)
+            })
+        }, date.get(Calendar.YEAR), date.get(Calendar.MONTH), date.get(Calendar.DAY_OF_MONTH))
+    }
+}
+
+class EntryTimeDialog : DialogFragment() {
+    override fun onCreateDialog(state: Bundle?): Dialog {
+        val date = Calendar.getInstance().apply {
+            timeInMillis = requireArguments().getLong("timestamp")
+        }
+        return TimePickerDialog(requireContext(), { _, hour, minute ->
+            date.set(Calendar.HOUR_OF_DAY, hour)
+            date.set(Calendar.MINUTE, minute)
+            date.set(Calendar.SECOND, 0)
+            date.set(Calendar.MILLISECOND, 0)
+            parentFragmentManager.setFragmentResult("timestamp", Bundle().apply {
+                putLong("value", date.timeInMillis)
+            })
+        }, date.get(Calendar.HOUR_OF_DAY), date.get(Calendar.MINUTE),
+            android.text.format.DateFormat.is24HourFormat(requireContext()))
     }
 }
 

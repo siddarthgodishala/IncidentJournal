@@ -25,16 +25,39 @@ No network account or server is required. Camera capture requires a camera appli
 | Requirement | Where it is handled |
 | --- | --- |
 | Scrollable title/date list | `NotebookFragment`, RecyclerView, `row_incident.xml` |
-| Separate detail screen | `EntryFragment` in the activity's Fragment back stack |
+| Separate detail screen | `EntryFragment` in a Navigation graph with Safe Args |
 | Add and delete | Notebook toolbar/button; editor confirmation dialog |
 | Local persistence | `IncidentStore`, Room entity and DAO |
 | Solved status in the list | Status label on each row and status filters |
-| Editable date | `EntryClockDialog` DatePickerDialog |
+| Editable date | `EntryDateDialog` DatePickerDialog |
 | Camera attachment | TakePicture activity result, private evidence files, FileProvider |
 | Implicit Intent | Text report using ACTION_SEND and an Android chooser |
 | Rotation handling | ViewModels, SavedStateHandle drafts, restored DialogFragments |
 
-Time selection uses a TimePickerDialog. Search and filter state also survive screen recreation. Database calls use Room's suspend APIs; image decoding runs on a background dispatcher.
+Time selection uses `EntryTimeDialog`, a separate DialogFragment containing a TimePickerDialog. Search and filter state also survive screen recreation. Database calls use Room's suspend APIs; image decoding runs on a background dispatcher.
+
+## Class-note alignment
+
+The app uses XML Views, view binding, Fragments, RecyclerView, ViewModels, coroutines, Room, and Navigation with Kotlin Safe Args. Room uses KAPT via `com.android.legacy-kapt`, the compatible plugin for this project's Android Gradle Plugin 9.4. Application and test code remain Kotlin; generated Room implementation files are build outputs.
+
+The DayNight theme follows the device's light/dark setting. Explicit MaterialToolbars provide the app bars, so the theme uses `NoActionBar` to avoid a duplicate bar. Toolbar icons obtain their foreground from `colorOnSurface` and their background from `colorSurface`. This implements the purpose of the class app-bar notes while retaining the notebook layout.
+
+Compatibility references: [Android's KAPT migration guidance](https://developer.android.com/build/migrate-to-built-in-kotlin) and [Navigation releases](https://developer.android.com/jetpack/androidx/releases/navigation).
+
+## Challenge review
+
+These are mappings to the fifth-edition textbook's published challenge topics, not a guarantee of instructor credit. Canvas's Project 2 challenge-information page was not available during review. The public previews do not expose every instruction for every exercise; the course-specific selection and any exclusions still need confirmation.
+
+| Chapter/topic | App behavior and evidence |
+| --- | --- |
+| [11: Formatting the Date](https://www.oreilly.com/library/view/android-programming-the/9780137645794/ch11s07.html) | Rows use readable, locale-aware DateFormat output rather than raw timestamps. |
+| [12: Addressing the Schema Warning](https://www.oreilly.com/library/view/android-programming-the/9780137645794/ch12s07.html) | Room exports its versioned schema to `app/schemas`; the processor receives `room.schemaLocation`. Full exercise text was not available in the public preview. |
+| [13: No Untitled Crimes](https://www.oreilly.com/library/view/android-programming-the/9780137645794/ch13s05.html) | Blank or whitespace-only titles cannot be saved. Topic confirmed in the contents; detailed exercise text remains unverified. |
+| [14: More Dialogs](https://www.oreilly.com/library/view/android-programming-the/9780137645794/ch14s03.html) | Separate date and time DialogFragments; the time button opens the time picker, with the chosen time persisted on Save. |
+| [15: An Empty View for the RecyclerView](https://www.oreilly.com/library/view/android-programming-the/9780137645794/ch15s05.html) | An empty list shows a message and a creation button; the placeholder disappears when a saved record is available. |
+| [15: Deleting Crimes](https://www.oreilly.com/library/view/android-programming-the/9780137645794/ch15s06.html) | A detail-screen menu action deletes the selected record after confirmation, then returns to the list. |
+
+The posted optional Chapter 15 exercise also describes theme-responsive app-bar icon colors and offers two challenge credits. The implementation is tested in light and dark modes, but whether that older announcement applies to this submission must be confirmed. It is not included as two additional guaranteed credits here.
 
 ## Checks
 
@@ -47,9 +70,9 @@ bash gradlew connectedDebugAndroidTest
 
 Run connected tests on a development emulator: the tests clear this app's records and photos. They do not touch other app packages.
 
-Build, lint, and all six instrumentation tests passed on an Android 15 / API 35 emulator on October 4, 2026. Lint reported 16 warnings and no errors.
+Build, lint, and all eight instrumentation tests passed on an Android 15 / API 35 emulator on October 4, 2026. Lint reported 31 warnings and no errors.
 
-The instrumentation suite covers draft rotation, required-title validation, explicit saving, reopening, date/time edits, report contents, deletion cancellation, a scrollable list, search/filter restoration, discarded drafts, camera success/cancellation, attachment cleanup, database reopening, note searches, and rejection of invalid camera output. Camera and share responses are simulated by the tests.
+The instrumentation suite covers draft rotation, required-title validation, explicit saving, reopening, date/time edits, report contents, deletion cancellation, a scrollable list, search/filter restoration, discarded drafts, camera success/cancellation, attachment cleanup, database reopening, note searches, rejection of invalid camera output, empty-list creation, light/dark toolbar and button contrast, and draft retention during theme changes. Camera and share responses are simulated by the tests.
 
 ## Repository contents
 

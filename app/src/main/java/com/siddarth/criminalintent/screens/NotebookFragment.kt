@@ -13,7 +13,7 @@ import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.*
 import com.siddarth.criminalintent.R
-import com.siddarth.criminalintent.NotebookActivity
+import androidx.navigation.fragment.findNavController
 import com.siddarth.criminalintent.databinding.FragmentNotebookBinding
 import com.siddarth.criminalintent.databinding.RowIncidentBinding
 import com.siddarth.criminalintent.storage.Incident
@@ -23,14 +23,20 @@ import kotlinx.coroutines.launch
 
 class NotebookFragment : Fragment(R.layout.fragment_notebook) {
     private val model: NotebookModel by viewModels()
+    private fun openEntry(key: String? = null) {
+        findNavController().navigate(NotebookFragmentDirections.openEntry(key))
+    }
+
     override fun onViewCreated(view: View, state: Bundle?) {
         val ui = FragmentNotebookBinding.bind(view)
-        val rows = NotebookRows { (requireActivity() as NotebookActivity).edit(it.key) }
+        val rows = NotebookRows { openEntry(it.key) }
         ui.entries.layoutManager = LinearLayoutManager(requireContext())
         ui.entries.adapter = rows
         ui.listToolbar.inflateMenu(R.menu.notebook_actions)
-        ui.listToolbar.setOnMenuItemClickListener { (requireActivity() as NotebookActivity).edit(); true }
-        ui.newEntry.setOnClickListener { (requireActivity() as NotebookActivity).edit() }
+        tintNotebookToolbar(ui.listToolbar)
+        ui.listToolbar.setOnMenuItemClickListener { openEntry(); true }
+        ui.newEntry.setOnClickListener { openEntry() }
+        ui.emptyNew.setOnClickListener { openEntry() }
         ui.search.setText(model.query.value)
         ui.search.doAfterTextChanged { model.search(it.toString()) }
         ui.statusFilter.check(when (model.filter.value) { "open" -> R.id.filter_open; "solved" -> R.id.filter_solved; else -> R.id.filter_all })
@@ -42,7 +48,8 @@ class NotebookFragment : Fragment(R.layout.fragment_notebook) {
                 model.page.collect { page ->
                     ui.loading.isVisible = !page.ready
                     ui.totals.text = getString(R.string.count, page.total, page.open)
-                    ui.emptyMessage.isVisible = page.ready && page.records.isEmpty()
+                    ui.emptyPanel.isVisible = page.ready && page.records.isEmpty()
+                    ui.emptyNew.isVisible = page.total == 0 && !page.failed
                     ui.emptyMessage.setText(when { page.failed -> R.string.load_error; page.total == 0 -> R.string.empty; else -> R.string.no_matches })
                     rows.submitList(page.records)
                 }

@@ -73,6 +73,14 @@ class NotebookWorkflowTest {
         onView(withText("OK")).perform(click())
         onView(withId(R.id.entry_solved)).perform(scrollTo(), click())
         screen.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
+        await {
+            var landscape = false
+            screen.onActivity {
+                landscape = it.resources.configuration.orientation ==
+                    android.content.res.Configuration.ORIENTATION_LANDSCAPE
+            }
+            landscape && screen.state == androidx.lifecycle.Lifecycle.State.RESUMED
+        }
         ready(R.id.entry_title)
         screen.recreate()
         ready(R.id.entry_title)
@@ -194,6 +202,59 @@ class NotebookWorkflowTest {
         onView(withId(R.id.search)).perform(replaceText("  envelopes  "), closeSoftKeyboard())
         awaitRows(1)
         onView(withId(R.id.row_title)).check(matches(withText("Supply cupboard")))
+    }
+
+    @Test fun emptyListOffersCreationAndHidesAfterSaving() {
+        ready(R.id.empty_new)
+        onView(withId(R.id.empty_message)).check(matches(withText(R.string.empty)))
+        onView(withId(R.id.empty_new)).perform(click())
+        ready(R.id.entry_title)
+        onView(withId(R.id.entry_title)).perform(replaceText("Lobby light"), closeSoftKeyboard())
+        onView(withId(R.id.action_save)).perform(click())
+        ready(R.id.new_entry)
+        awaitRows(1)
+        onView(withId(R.id.empty_panel)).check(matches(withEffectiveVisibility(Visibility.GONE)))
+    }
+
+    @Test fun themeSwitchKeepsDraftAndToolbarIconsReadable() {
+        val colors = mutableListOf<Int>()
+        for (mode in listOf(
+            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO,
+            androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
+        )) {
+            screen.onActivity { it.delegate.localNightMode = mode }
+            ready(R.id.action_new)
+            screen.onActivity { activity ->
+                val toolbar = activity.findViewById<com.google.android.material.appbar.MaterialToolbar>(R.id.list_toolbar)
+                val icon = toolbar.menu.findItem(R.id.action_new).icon!!
+                val bitmap = Bitmap.createBitmap(24, 24, Bitmap.Config.ARGB_8888)
+                icon.setBounds(0, 0, 24, 24)
+                icon.draw(android.graphics.Canvas(bitmap))
+                val color = bitmap.getPixel(12, 12)
+                val surface = com.google.android.material.color.MaterialColors.getColor(
+                    toolbar, com.google.android.material.R.attr.colorSurface)
+                assertTrue("App-bar icon must contrast with its background",
+                    androidx.core.graphics.ColorUtils.calculateContrast(color, surface) >= 4.5)
+                val primary = com.google.android.material.color.MaterialColors.getColor(
+                    toolbar, com.google.android.material.R.attr.colorPrimary)
+                val onPrimary = com.google.android.material.color.MaterialColors.getColor(
+                    toolbar, com.google.android.material.R.attr.colorOnPrimary)
+                assertTrue("Primary button text must remain readable",
+                    androidx.core.graphics.ColorUtils.calculateContrast(onPrimary, primary) >= 4.5)
+                colors.add(color)
+                bitmap.recycle()
+            }
+        }
+        assertNotEquals("Icon color should respond to the theme", colors[0], colors[1])
+        onView(withId(R.id.action_new)).perform(click())
+        ready(R.id.entry_title)
+        onView(withId(R.id.entry_title)).perform(replaceText("Keep my draft"), closeSoftKeyboard())
+        screen.onActivity { it.delegate.localNightMode = androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO }
+        ready(R.id.entry_title)
+        onView(withId(R.id.entry_title)).check(matches(withText("Keep my draft")))
+        onView(withId(R.id.action_save)).perform(click())
+        ready(R.id.new_entry)
+        assertEquals("Keep my draft", runBlocking { dao.watch().first().single().heading })
     }
 
     private fun openDelete() {

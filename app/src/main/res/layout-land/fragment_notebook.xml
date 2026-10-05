@@ -10,7 +10,10 @@
 </com.google.android.material.chip.ChipGroup>
 <FrameLayout android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
 <androidx.recyclerview.widget.RecyclerView android:id="@+id/entries" android:layout_width="match_parent" android:layout_height="match_parent" android:clipToPadding="false" android:paddingBottom="20dp"/>
-<TextView android:id="@+id/empty_message" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="@string/empty" android:textSize="18sp" android:textColor="@color/muted" android:visibility="gone"/>
+<LinearLayout android:id="@+id/empty_panel" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:gravity="center" android:visibility="gone">
+<TextView android:id="@+id/empty_message" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center" android:text="@string/empty" android:textSize="18sp" android:textColor="@color/muted"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/empty_new" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/new_entry" android:textAllCaps="false"/>
+</LinearLayout>
 <ProgressBar android:id="@+id/loading" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_gravity="center"/>
 </FrameLayout>
 <com.google.android.material.button.MaterialButton android:id="@+id/new_entry" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/new_entry" android:textAllCaps="false" android:layout_marginBottom="12dp"/>
