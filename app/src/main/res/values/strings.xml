@@ -1,0 +1,11 @@
+<resources>
+<string name="app_name">Incident Journal</string><string name="notebook">CRIMINALINTENT / JOURNAL</string><string name="heading">Small incidents.
+Clear records.</string><string name="search_hint">Search titles or notes</string>
+<string name="all">All</string><string name="open">Open</string><string name="solved">Solved</string><string name="new_entry">New entry</string><string name="new_title">New incident</string><string name="edit_title">Edit incident</string><string name="save">Save</string><string name="delete">Delete</string><string name="cancel">Cancel</string><string name="discard">Discard</string><string name="keep_editing">Keep editing</string><string name="discard_title">Discard your changes?</string><string name="discard_body">Your unsaved edits and new photos will be removed.</string><string name="delete_title">Delete this incident?</string><string name="delete_body">The saved record and its photo will be removed.</string><string name="title_hint">What happened?</string><string name="notes_hint">Notes (optional)</string><string name="date_label">Date and time</string><string name="resolved_label">This incident is solved</string><string name="photo_label">Evidence</string><string name="camera">Take a photo</string><string name="retake">Replace photo</string><string name="share">Share report</string><string name="photo_alt">Incident evidence photo</string><string name="photo_empty">No photo attached</string><string name="save_hint">Use Save to keep your changes.</string><string name="empty">Your notebook is empty.
+Add an incident to get started.</string><string name="no_matches">No matching incidents.
+Try another search or filter.</string><string name="count">%1$d entries · %2$d open</string><string name="title_required">Enter a title before saving.</string><string name="save_error">Could not save. Your edits are still here.</string><string name="load_error">Could not open this incident. Go back and try again.</string><string name="camera_error">A camera app could not be opened.</string><string name="photo_error">That photo could not be saved. Please try again.</string><string name="share_error">No app could open the report.</string><string name="back">Back</string><string name="share_subject">Incident: %1$s</string><string name="report">%1$s
+Recorded: %2$s
+Status: %3$s
+
+%4$s</string>
+</resources>

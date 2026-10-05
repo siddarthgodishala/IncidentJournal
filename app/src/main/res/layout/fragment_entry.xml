@@ -1,0 +1,23 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+<com.google.android.material.appbar.MaterialToolbar android:id="@+id/editor_toolbar" android:layout_width="match_parent" android:layout_height="?attr/actionBarSize" app:titleTextColor="@color/ink"/>
+<androidx.core.widget.NestedScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
+<LinearLayout android:id="@+id/editor_fields" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+<com.google.android.material.textfield.TextInputLayout android:id="@+id/title_box" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="@string/title_hint">
+<com.google.android.material.textfield.TextInputEditText android:id="@+id/entry_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textCapSentences" android:maxLength="200" android:textSize="24sp" android:saveEnabled="false"/>
+</com.google.android.material.textfield.TextInputLayout>
+<com.google.android.material.textfield.TextInputLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:hint="@string/notes_hint">
+<com.google.android.material.textfield.TextInputEditText android:id="@+id/entry_notes" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textMultiLine|textCapSentences" android:minLines="2" android:maxLength="4000" android:saveEnabled="false"/>
+</com.google.android.material.textfield.TextInputLayout>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="24dp" android:text="@string/date_label" android:textStyle="bold" android:textColor="@color/ink"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/pick_date" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAllCaps="false"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/pick_time" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:textAllCaps="false"/>
+<com.google.android.material.checkbox.MaterialCheckBox android:id="@+id/entry_solved" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp" android:text="@string/resolved_label" android:saveEnabled="false"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:text="@string/photo_label" android:textStyle="bold" android:textColor="@color/ink"/>
+<FrameLayout android:layout_width="match_parent" android:layout_height="200dp" android:layout_marginTop="12dp" android:background="@color/line">
+<ImageView android:id="@+id/evidence" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitCenter" android:contentDescription="@string/photo_alt"/>
+<TextView android:id="@+id/no_evidence" android:layout_width="match_parent" android:layout_height="match_parent" android:gravity="center" android:text="@string/photo_empty" android:textColor="@color/ink"/>
+</FrameLayout>
+<com.google.android.material.button.MaterialButton android:id="@+id/capture" style="@style/Widget.MaterialComponents.Button.OutlinedButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/camera" android:textAllCaps="false"/>
+<com.google.android.material.button.MaterialButton android:id="@+id/send_report" style="@style/Widget.MaterialComponents.Button.TextButton" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/share" android:textAllCaps="false"/>
+<TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/save_hint" android:textColor="@color/muted" android:gravity="center"/>
+</LinearLayout></androidx.core.widget.NestedScrollView></LinearLayout>

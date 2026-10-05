@@ -1,0 +1,6 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingVertical="16dp" android:background="?attr/selectableItemBackground" android:clickable="true" android:focusable="true">
+<TextView android:id="@+id/row_date" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/muted" android:textSize="12sp"/>
+<TextView android:id="@+id/row_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginVertical="8dp" android:textColor="@color/ink" android:fontFamily="serif" android:textSize="23sp" android:maxLines="2" android:ellipsize="end"/>
+<TextView android:id="@+id/row_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="14sp" android:textColor="@color/accent"/>
+<View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/line" android:layout_marginTop="16dp"/>
+</LinearLayout>
