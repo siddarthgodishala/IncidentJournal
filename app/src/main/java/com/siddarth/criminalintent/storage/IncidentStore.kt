@@ -1,6 +1,12 @@
 package com.siddarth.criminalintent.storage
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Entity
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.RoomDatabase
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 
@@ -18,9 +24,13 @@ data class Incident(
 interface IncidentQueries {
     @Query("SELECT * FROM notebook ORDER BY occurredAt DESC, key ASC")
     fun watch(): Flow<List<Incident>>
+
     @Query("SELECT * FROM notebook WHERE `key` = :key")
     suspend fun read(key: String): Incident?
-    @Upsert suspend fun write(incident: Incident)
+
+    @Upsert
+    suspend fun write(incident: Incident)
+
     @Query("DELETE FROM notebook WHERE `key` = :key")
     suspend fun remove(key: String)
 }

@@ -58,6 +58,26 @@ class NotebookWorkflowTest {
         runBlocking { dao.watch().first().forEach { dao.remove(it.key) } }
         app.evidenceDirectory.listFiles()?.forEach { it.delete() }
     }
+    @Test fun leavingBlankDraftOrSavingWhitespaceDoesNotCreateRecord() {
+        onView(withId(R.id.new_entry)).perform(click())
+        ready(R.id.entry_title)
+        pressBack()
+        ready(R.id.new_entry)
+        assertTrue(runBlocking { dao.watch().first().isEmpty() })
+
+        onView(withId(R.id.new_entry)).perform(click())
+        ready(R.id.entry_title)
+        onView(withId(R.id.entry_title)).perform(replaceText("   "), closeSoftKeyboard())
+        onView(withId(R.id.action_save)).perform(click())
+        onView(withId(R.id.entry_title)).check(matches(isDisplayed()))
+        assertTrue(runBlocking { dao.watch().first().isEmpty() })
+
+        pressBack()
+        onView(withText(R.string.discard)).perform(click())
+        ready(R.id.new_entry)
+        assertTrue(runBlocking { dao.watch().first().isEmpty() })
+    }
+
     @Test fun draftRotationSaveReopenAndDelete() {
         onView(withId(R.id.new_entry)).perform(click())
         ready(R.id.entry_title)
@@ -95,17 +115,23 @@ class NotebookWorkflowTest {
         assertTrue(report.getStringExtra(Intent.EXTRA_TEXT)!!.contains("Restocked the lower tray."))
         onView(withId(R.id.action_save)).perform(click())
         ready(R.id.new_entry)
-        val record=runBlocking { dao.watch().first().single() }
+        val record = runBlocking { dao.watch().first().single() }
         assertTrue(record.resolved)
-        val date=Calendar.getInstance().apply { timeInMillis=record.occurredAt }
-        assertEquals(19,date.get(Calendar.DAY_OF_MONTH)); assertEquals(9,date.get(Calendar.HOUR_OF_DAY)); assertEquals(20,date.get(Calendar.MINUTE))
-        screen.close(); screen=ActivityScenario.launch(NotebookActivity::class.java)
+        val date = Calendar.getInstance().apply { timeInMillis=record.occurredAt }
+        assertEquals(19,date.get(Calendar.DAY_OF_MONTH))
+        assertEquals(9,date.get(Calendar.HOUR_OF_DAY))
+        assertEquals(20,date.get(Calendar.MINUTE))
+        screen.close()
+        screen = ActivityScenario.launch(NotebookActivity::class.java)
         ready(R.id.entries)
-        onView(withText(record.heading)).perform(click()); ready(R.id.entry_title)
+        onView(withText(record.heading)).perform(click())
+        ready(R.id.entry_title)
         onView(withId(R.id.entry_notes)).check(matches(withText(record.notes)))
-        openDelete(); onView(withText(R.string.cancel)).perform(click())
+        openDelete()
+        onView(withText(R.string.cancel)).perform(click())
         assertNotNull(runBlocking { dao.read(record.key) })
-        openDelete(); onView(withText(R.string.delete)).perform(click())
+        openDelete()
+        onView(withText(R.string.delete)).perform(click())
         ready(R.id.new_entry)
         assertNull(runBlocking { dao.read(record.key) })
     }
@@ -119,24 +145,34 @@ class NotebookWorkflowTest {
         onView(withId(R.id.search)).perform(replaceText("Incident 35"), closeSoftKeyboard())
         awaitRows(1)
         onView(withId(R.id.row_title)).check(matches(withText("Incident 35")))
-        onView(withId(R.id.filter_solved)).perform(click()); awaitRows(0)
+        onView(withId(R.id.filter_solved)).perform(click())
+        awaitRows(0)
         onView(withId(R.id.empty_message)).check(matches(withText(R.string.no_matches)))
-        screen.recreate(); ready(R.id.search)
+        screen.recreate()
+        ready(R.id.search)
         onView(withId(R.id.search)).check(matches(withText("Incident 35")))
         onView(withId(R.id.filter_solved)).check(matches(isChecked()))
-        onView(withId(R.id.action_new)).perform(click()); ready(R.id.entry_title)
+        onView(withId(R.id.action_new)).perform(click())
+        ready(R.id.entry_title)
         onView(withId(R.id.entry_title)).perform(replaceText("Discard this draft"),closeSoftKeyboard())
-        pressBack(); onView(withText(R.string.discard)).perform(click()); ready(R.id.new_entry)
+        pressBack()
+        onView(withText(R.string.discard)).perform(click())
+        ready(R.id.new_entry)
         assertEquals(36,runBlocking { dao.watch().first().size })
     }
     @Test fun cameraAttachmentRetakeCancellationAndDiscard() {
-        onView(withId(R.id.new_entry)).perform(click()); ready(R.id.entry_title)
+        onView(withId(R.id.new_entry)).perform(click())
+        ready(R.id.entry_title)
         onView(withId(R.id.entry_title)).perform(replaceText("Broken stapler"),closeSoftKeyboard())
         val cameraWriter = IntentCallback { intent ->
             if(intent.action==MediaStore.ACTION_IMAGE_CAPTURE) {
                 @Suppress("DEPRECATION") val uri=intent.getParcelableExtra<Uri>(MediaStore.EXTRA_OUTPUT)!!
                 app.contentResolver.openOutputStream(uri)!!.use { output ->
-                    Bitmap.createBitmap(40,40,Bitmap.Config.ARGB_8888).apply { eraseColor(android.graphics.Color.GREEN); compress(Bitmap.CompressFormat.JPEG,90,output); recycle() }
+                    Bitmap.createBitmap(40, 40, Bitmap.Config.ARGB_8888).apply {
+                        eraseColor(android.graphics.Color.GREEN)
+                        compress(Bitmap.CompressFormat.JPEG, 90, output)
+                        recycle()
+                    }
                 }
             }
         }
@@ -145,25 +181,34 @@ class NotebookWorkflowTest {
         onView(withId(R.id.capture)).perform(scrollTo(),click())
         await { app.evidenceDirectory.listFiles()?.any { it.length()>0 } == true }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-        screen.recreate(); ready(R.id.entry_title)
+        screen.recreate()
+        ready(R.id.entry_title)
         onView(withId(R.id.capture)).perform(scrollTo()).check(matches(withText(R.string.retake)))
         Intents.intending(hasAction(MediaStore.ACTION_IMAGE_CAPTURE)).respondWith(ActivityResult(Activity.RESULT_CANCELED,null))
         onView(withId(R.id.capture)).perform(click())
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-        onView(withId(R.id.action_save)).perform(click()); ready(R.id.new_entry)
-        val record=runBlocking { dao.watch().first().single() }
-        assertNotNull(record.image); assertTrue(app.evidenceDirectory.resolve(record.image!!).exists())
+        onView(withId(R.id.action_save)).perform(click())
+        ready(R.id.new_entry)
+        val record = runBlocking { dao.watch().first().single() }
+        assertNotNull(record.image)
+        assertTrue(app.evidenceDirectory.resolve(record.image!!).exists())
         assertEquals(1,app.evidenceDirectory.listFiles()!!.size)
-        onView(withText(record.heading)).perform(click()); ready(R.id.entry_title)
+        onView(withText(record.heading)).perform(click())
+        ready(R.id.entry_title)
         Intents.intending(hasAction(MediaStore.ACTION_IMAGE_CAPTURE)).respondWith(ActivityResult(Activity.RESULT_OK,null))
         onView(withId(R.id.capture)).perform(scrollTo(),click())
         await { app.evidenceDirectory.listFiles()!!.size == 2 }
         InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-        pressBack(); onView(withText(R.string.discard)).perform(click()); ready(R.id.new_entry)
+        pressBack()
+        onView(withText(R.string.discard)).perform(click())
+        ready(R.id.new_entry)
         assertEquals(record.image,runBlocking { dao.read(record.key)!!.image })
         assertEquals(1,app.evidenceDirectory.listFiles()!!.size)
-        onView(withText(record.heading)).perform(click()); ready(R.id.entry_title)
-        openDelete(); onView(withText(R.string.delete)).perform(click()); ready(R.id.new_entry)
+        onView(withText(record.heading)).perform(click())
+        ready(R.id.entry_title)
+        openDelete()
+        onView(withText(R.string.delete)).perform(click())
+        ready(R.id.new_entry)
         assertTrue(app.evidenceDirectory.listFiles()!!.isEmpty())
         IntentMonitorRegistry.getInstance().removeIntentCallback(cameraWriter)
     }
@@ -262,12 +307,15 @@ class NotebookWorkflowTest {
         onView(withText(R.string.delete)).perform(click())
     }
     private fun ready(id: Int) = await {
-        var ok=false
-        screen.onActivity { val view=it.findViewById<View>(id);ok=view!=null && view.isShown && view.isEnabled }
+        var ok = false
+        screen.onActivity {
+            val view = it.findViewById<View>(id)
+            ok = view != null && view.isShown && view.isEnabled
+        }
         ok
     }
     private fun awaitRows(count: Int)=await {
-        var ok=false
+        var ok = false
         screen.onActivity { ok=it.findViewById<RecyclerView>(R.id.entries)?.adapter?.itemCount==count }
         ok
     }

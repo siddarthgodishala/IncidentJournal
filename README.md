@@ -70,9 +70,9 @@ bash gradlew connectedDebugAndroidTest
 
 Run connected tests on a development emulator: the tests clear this app's records and photos. They do not touch other app packages.
 
-Build, lint, and all eight instrumentation tests passed on an Android 15 / API 35 emulator on October 4, 2026. Lint reported 31 warnings and no errors.
+Build, lint, and all nine instrumentation tests passed on an Android 15 / API 35 emulator during the latest verification. Lint reported 22 warnings and no errors.
 
-The instrumentation suite covers draft rotation, required-title validation, explicit saving, reopening, date/time edits, report contents, deletion cancellation, a scrollable list, search/filter restoration, discarded drafts, camera success/cancellation, attachment cleanup, database reopening, note searches, rejection of invalid camera output, empty-list creation, light/dark toolbar and button contrast, and draft retention during theme changes. Camera and share responses are simulated by the tests.
+The instrumentation suite covers draft rotation, required-title validation, explicit saving, reopening, date/time edits, report contents, deletion cancellation, a scrollable list, search/filter restoration, discarded drafts, camera success/cancellation, attachment cleanup, database reopening, note searches, rejection of invalid camera output, empty-list creation, backing out of a blank draft, rejection of whitespace-only titles, light/dark toolbar and button contrast, and draft retention during theme changes. Camera and share responses are simulated by the tests.
 
 ## Repository contents
 

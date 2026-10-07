@@ -36,8 +36,11 @@ class EntryModel(
 
     var dirty: Boolean
         get() = state["dirty"] ?: false
-        private set(value) { state["dirty"] = value }
+        private set(value) {
+            state["dirty"] = value
+        }
 
+    // The editable draft lives in saved state, not Room, until Save is pressed.
     var draft: Incident
         get() {
             val bundle = checkNotNull(state.get<Bundle>(DRAFT))
@@ -62,10 +65,12 @@ class EntryModel(
             revision.value += 1
         }
 
+    // Keep the saved attachment while a replacement is only part of an unsaved draft.
     private var originalImage: String?
         get() = state["original_image"]
         set(value) { state["original_image"] = value }
 
+    // Remember the camera destination so its result can be handled after recreation.
     private var pendingImage: String?
         get() = state[CAMERA_FILE]
         set(value) {
@@ -141,6 +146,7 @@ class EntryModel(
                     val previousDraftImage = draft.image
                     draft = draft.copy(image = name)
                     dirty = true
+                    // Only discarded draft photos can be deleted before the record is saved.
                     if (previousDraftImage != originalImage) {
                         deleteFiles(previousDraftImage)
                     }
@@ -164,6 +170,7 @@ class EntryModel(
                     heading = draft.heading.trim(),
                     notes = draft.notes.trim()
                 )
+                // Commit the new attachment reference before removing the previous saved file.
                 dao.write(record)
                 if (originalImage != record.image) deleteFiles(originalImage)
                 originalImage = record.image

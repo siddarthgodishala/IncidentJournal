@@ -26,6 +26,9 @@ class StorageRoundTripTest {
             assertEquals("Repaired",store.incidents().read(record.key)!!.notes)
             store.incidents().remove(record.key)
             assertNull(store.incidents().read(record.key))
-        } finally { store.close(); context.deleteDatabase(name) }
+        } finally {
+            store.close()
+            context.deleteDatabase(name)
+        }
     }
 }

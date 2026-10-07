@@ -48,20 +48,44 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
         tintNotebookToolbar(binding.editorToolbar)
         binding.editorToolbar.menu.findItem(R.id.action_delete).isVisible = model.existing
         binding.editorToolbar.setOnMenuItemClickListener { item ->
-            when(item.itemId) {
+            when (item.itemId) {
                 R.id.action_save -> {
                     if (model.ready.value) {
-                        if (model.draft.heading.isBlank()) { binding.titleBox.error = getString(R.string.title_required); binding.entryTitle.requestFocus() }
-                        else model.save { message(R.string.save_error) }
+                        if (model.draft.heading.isBlank()) {
+                            binding.titleBox.error = getString(R.string.title_required)
+                            binding.entryTitle.requestFocus()
+                        } else {
+                            model.save { message(R.string.save_error) }
+                        }
                     }
                 }
                 R.id.action_delete -> confirm(true)
-            }; true
+            }
+            true
         }
-        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) { override fun handleOnBackPressed() = leave() })
-        binding.entryTitle.doAfterTextChanged { if (!painting) { binding.titleBox.error = null; model.change { item -> item.copy(heading = it.toString()) } } }
-        binding.entryNotes.doAfterTextChanged { if (!painting) model.change { item -> item.copy(notes = it.toString()) } }
-        binding.entrySolved.setOnCheckedChangeListener { _, checked -> if (!painting) model.change { it.copy(resolved = checked) } }
+        requireActivity().onBackPressedDispatcher.addCallback(
+            viewLifecycleOwner,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() = leave()
+            }
+        )
+        // Rendering a restored draft also triggers these listeners; only user edits change it.
+        binding.entryTitle.doAfterTextChanged { text ->
+            if (!painting) {
+                binding.titleBox.error = null
+                model.change { item -> item.copy(heading = text.toString()) }
+            }
+        }
+        binding.entryNotes.doAfterTextChanged { text ->
+            if (!painting) {
+                model.change { item -> item.copy(notes = text.toString()) }
+            }
+        }
+        binding.entrySolved.setOnCheckedChangeListener { _, checked ->
+            if (!painting) {
+                model.change { it.copy(resolved = checked) }
+            }
+        }
         binding.pickDate.setOnClickListener { pick(false) }
         binding.pickTime.setOnClickListener { pick(true) }
         binding.capture.setOnClickListener {
@@ -81,17 +105,31 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
             }
         }
         binding.sendReport.setOnClickListener { share() }
-        childFragmentManager.setFragmentResultListener("timestamp", viewLifecycleOwner) { _, b -> model.change { it.copy(occurredAt = b.getLong("value")) } }
-        childFragmentManager.setFragmentResultListener("discard", viewLifecycleOwner) { _, _ -> model.discard() }
-        childFragmentManager.setFragmentResultListener("remove", viewLifecycleOwner) { _, _ -> model.remove { message(R.string.save_error) } }
+        childFragmentManager.setFragmentResultListener("timestamp", viewLifecycleOwner) { _, result ->
+            model.change { it.copy(occurredAt = result.getLong("value")) }
+        }
+        childFragmentManager.setFragmentResultListener("discard", viewLifecycleOwner) { _, _ ->
+            model.discard()
+        }
+        childFragmentManager.setFragmentResultListener("remove", viewLifecycleOwner) { _, _ ->
+            model.remove { message(R.string.save_error) }
+        }
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 launch { model.ready.collect { render() } }
                 launch { model.revision.collect { render() } }
                 launch { model.busy.collect { render() } }
                 launch { model.photoPending.collect { render() } }
-                launch { model.problem.collect { if (it) message(R.string.load_error) } }
-                launch { model.closed.collect { if (it) findNavController().popBackStack() } }
+                launch {
+                    model.problem.collect { failed ->
+                        if (failed) message(R.string.load_error)
+                    }
+                }
+                launch {
+                    model.closed.collect { closed ->
+                        if (closed) findNavController().popBackStack()
+                    }
+                }
             }
         }
         render()
@@ -100,7 +138,10 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
     private fun render() {
         val b = ui ?: return
         val enabled = model.ready.value && !model.busy.value && !model.photoPending.value
-        listOf(b.entryTitle, b.entryNotes, b.entrySolved, b.pickDate, b.pickTime, b.capture, b.sendReport).forEach { it.isEnabled = enabled }
+        listOf(
+            b.entryTitle, b.entryNotes, b.entrySolved,
+            b.pickDate, b.pickTime, b.capture, b.sendReport
+        ).forEach { it.isEnabled = enabled }
         b.editorToolbar.menu.findItem(R.id.action_save).isEnabled = enabled
         b.editorToolbar.menu.findItem(R.id.action_delete).isEnabled = enabled
         if (!model.ready.value) return
@@ -110,14 +151,18 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
         if (b.entryNotes.text.toString() != item.notes) b.entryNotes.setText(item.notes)
         b.entrySolved.isChecked = item.resolved
         b.pickDate.text = DateFormat.getDateInstance(DateFormat.LONG).format(Date(item.occurredAt))
-        b.pickTime.text = android.text.format.DateFormat.getTimeFormat(requireContext()).format(Date(item.occurredAt))
+        b.pickTime.text = android.text.format.DateFormat.getTimeFormat(requireContext())
+            .format(Date(item.occurredAt))
         painting = false
         if (!initialized || shownPhoto != item.image) {
             initialized = true
             shownPhoto = item.image
+            // A replaced photo must not be overwritten by an older decode completing later.
             photoTask?.cancel()
             photoTask = viewLifecycleOwner.lifecycleScope.launch {
-                val image = withContext(Dispatchers.IO) { item.image?.let { EvidenceDecoder.decode(model.file(it)) } }
+                val image = withContext(Dispatchers.IO) {
+                    item.image?.let { EvidenceDecoder.decode(model.file(it)) }
+                }
                 b.evidence.setImageBitmap(image)
                 b.noEvidence.isVisible = image == null
             }
@@ -131,20 +176,53 @@ class EntryFragment : Fragment(R.layout.fragment_entry) {
         dialog.arguments = Bundle().apply { putLong("timestamp", model.draft.occurredAt) }
         dialog.show(childFragmentManager, "picker")
     }
+
     private fun confirm(deletion: Boolean) {
-        if (model.busy.value || model.photoPending.value || childFragmentManager.findFragmentByTag("confirmation") != null) return
-        EntryConfirmation().apply { arguments = Bundle().apply { putBoolean("deletion", deletion) } }.show(childFragmentManager, "confirmation")
+        if (model.busy.value || model.photoPending.value ||
+            childFragmentManager.findFragmentByTag("confirmation") != null
+        ) return
+
+        EntryConfirmation().apply {
+            arguments = Bundle().apply { putBoolean("deletion", deletion) }
+        }.show(childFragmentManager, "confirmation")
     }
-    private fun leave() { if (!model.busy.value && !model.photoPending.value) { if (model.dirty) confirm(false) else model.discard() } }
+
+    private fun leave() {
+        if (!model.busy.value && !model.photoPending.value) {
+            if (model.dirty) {
+                confirm(false)
+            } else {
+                model.discard()
+            }
+        }
+    }
+
     private fun share() {
         if (!model.ready.value) return
         val item = model.draft
         val title = item.heading.ifBlank { getString(R.string.new_title) }
-        val report = getString(R.string.report, title, DateFormat.getDateTimeInstance().format(Date(item.occurredAt)), getString(if (item.resolved) R.string.solved else R.string.open), item.notes)
-        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_SUBJECT, getString(R.string.share_subject, title)).putExtra(Intent.EXTRA_TEXT, report)
-        try { startActivity(Intent.createChooser(send, getString(R.string.share))) } catch (_: Exception) { message(R.string.share_error) }
+        val report = getString(
+            R.string.report,
+            title,
+            DateFormat.getDateTimeInstance().format(Date(item.occurredAt)),
+            getString(if (item.resolved) R.string.solved else R.string.open),
+            item.notes
+        )
+        val send = Intent(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.share_subject, title))
+            .putExtra(Intent.EXTRA_TEXT, report)
+        try {
+            startActivity(Intent.createChooser(send, getString(R.string.share)))
+        } catch (_: Exception) {
+            message(R.string.share_error)
+        }
     }
-    private fun message(text: Int) { ui?.let { Snackbar.make(it.root, text, Snackbar.LENGTH_LONG).show() } }
+
+    private fun message(text: Int) {
+        ui?.let { Snackbar.make(it.root, text, Snackbar.LENGTH_LONG).show() }
+    }
+
     override fun onDestroyView() {
         photoTask?.cancel()
         initialized = false
