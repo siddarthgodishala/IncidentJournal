@@ -74,6 +74,10 @@ Build, lint, and all nine instrumentation tests passed on an Android 15 / API 35
 
 The instrumentation suite covers draft rotation, required-title validation, explicit saving, reopening, date/time edits, report contents, deletion cancellation, a scrollable list, search/filter restoration, discarded drafts, camera success/cancellation, attachment cleanup, database reopening, note searches, rejection of invalid camera output, empty-list creation, backing out of a blank draft, rejection of whitespace-only titles, light/dark toolbar and button contrast, and draft retention during theme changes. Camera and share responses are simulated by the tests.
 
+## Resource organization
+
+Display text is in `res/values/journal_text.xml`, colors in `res/values/journal_palette.xml`, and the theme in `res/values/journal_theme.xml`. Night colors are in `res/values-night/journal_palette.xml`. Resource identifiers and app behavior are unchanged by these filenames.
+
 ## Repository contents
 
 Commit source, resources, schema, wrapper, and build configuration. Keep generated `build` folders, `.gradle`, `.idea`, `.kotlin`, and `local.properties` out of the repository. The supplied source archive excludes them.
